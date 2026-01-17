@@ -1,0 +1,203 @@
+// =====================================================================
+// 0. CONFIGURATION: LAKES + YEARS + SEASON WINDOW
+// =====================================================================
+
+// EDIT this list with your lakes
+var lakes = [
+   {
+    name: 'razzaza',
+    center: ee.Geometry.Point([43.68, 32.67]),
+    buffer_m: 22100
+  },
+  {
+    name: 'habbaniyah',
+    center: ee.Geometry.Point([43.46,33.30]),
+    buffer_m: 20000
+  },
+  {
+    name: 'dukan',
+    center: ee.Geometry.Point([44.95, 36.1]),
+    buffer_m: 18000
+  },
+  {
+    name: 'tharthar',
+    center: ee.Geometry.Point([43.254878, 34.035950]),
+    buffer_m: 48000
+  },
+  {
+    name: 'darbandikhan',
+    center: ee.Geometry.Point([45.808285, 35.170926]),
+    buffer_m: 15000
+  }
+];
+
+// Years you want to export
+var years = [2017, 2021];
+
+// Seasonal window (recommended for cleaner shorelines)
+// Example: June (6) to September (9)
+var seasonStartMonth = 6;
+var seasonEndMonth   = 9;
+
+var driveFolder = 'Iraq_Lake';  // Google Drive folder name
+
+// 8-bit scaling for model inputs
+// Adjust MAX if your SR values clip too aggressively.
+// Typical SR reflectance is scaled ~0–10000 in GEE.
+var SR_MIN = 0;
+var SR_MAX = 3000;  // common for "display-like" scaling; tune for your use
+
+// NDWI threshold for optional refinement
+var NDWI_THR = 0.10;
+
+
+// =====================================================================
+// 1. HELPER: BUILD SENTINEL-2 L2A MEDIAN COMPOSITE (B2,B3,B4,B8) + NDWI
+// =====================================================================
+function buildS2Composite_L2A(aoi, year, startMonth, endMonth) {
+
+  var start = ee.Date.fromYMD(year, startMonth, 1);
+  var end   = ee.Date.fromYMD(year, endMonth, 28); // safe end day
+
+  // Sentinel-2 Level-2A Surface Reflectance (Harmonized)
+  var s2 = ee.ImageCollection('COPERNICUS/S2_SR_HARMONIZED')
+    .filterBounds(aoi)
+    .filterDate(start, end)
+    .filter(ee.Filter.lt('CLOUDY_PIXEL_PERCENTAGE', 10))
+    .select(['B2','B3','B4','B8']); // 10 m bands
+
+  // Add NDWI band for later QA / refinement
+  var withNDWI = s2.map(function(img) {
+    var ndwi = img.normalizedDifference(['B3','B8']).rename('NDWI');
+    return img.addBands(ndwi);
+  });
+
+  return withNDWI.median().clip(aoi);
+}
+
+
+// =====================================================================
+// 2. HELPER: CONVERT SENTINEL-2 SR TO 8-BIT (0-255)
+// =====================================================================
+function to8bit(img4band) {
+  return img4band
+    .clamp(SR_MIN, SR_MAX)
+    .subtract(SR_MIN)
+    .divide(SR_MAX - SR_MIN)
+    .multiply(255)
+    .toUint8();
+}
+
+
+// =====================================================================
+// 3. HELPER: GET CORRECT GSW WATER MASK (SEASONAL + PERMANENT)
+// =====================================================================
+// waterClass meanings:
+// 0 = No data
+// 1 = Not water
+// 2 = Seasonal water
+// 3 = Permanent water
+function getGSWWaterMask(aoi, year, refImage) {
+
+  var gswCol = ee.ImageCollection('JRC/GSW1_4/YearlyHistory')
+    .select('waterClass')
+    .filter(ee.Filter.calendarRange(year, year, 'year'));
+
+  var gswFirst = ee.Image(gswCol.first());
+
+  // Use Sentinel-2 projection (10 m) as reference
+  var refProj = refImage.select('B2').projection();
+
+  // Fallback image if GSW does not exist for the year
+  var emptyMask = ee.Image(0).rename('water')
+    .reproject({crs: refProj, scale: 10})
+    .clip(aoi);
+
+  var waterClass = ee.Image(
+    ee.Algorithms.If(gswFirst, gswFirst.clip(aoi), emptyMask)
+  );
+
+  // Include both seasonal (2) + permanent (3)
+  var waterBinary = waterClass.eq(2).or(waterClass.eq(3))
+    .rename('water')
+    .reproject({crs: refProj, scale: 10});
+
+  return waterBinary;
+}
+
+
+// =====================================================================
+// 4. OPTIONAL: REFINE WATER MASK WITH NDWI (REDUCE FALSE POSITIVES)
+// =====================================================================
+function refineWithNDWI(waterMask, s2comp) {
+  var ndwi = s2comp.select('NDWI');
+  var ndwiMask = ndwi.gt(NDWI_THR);
+  return waterMask.and(ndwiMask).rename('water');
+}
+
+
+// =====================================================================
+// 5. MAIN LOOP: EXPORT 8-BIT S2 + WATER MASK FOR EACH LAKE + YEAR
+// =====================================================================
+lakes.forEach(function(lake) {
+
+  var aoi = lake.center.buffer(lake.buffer_m);
+  Map.addLayer(aoi, {}, lake.name + ' AOI');
+
+  years.forEach(function(year) {
+
+    // ---- Build seasonal Sentinel-2 L2A composite ----
+    var s2Comp = buildS2Composite_L2A(aoi, year, seasonStartMonth, seasonEndMonth);
+
+    // Visual check (RGB)
+    Map.addLayer(
+      s2Comp,
+      {bands:['B4','B3','B2'], min:0, max:3000},
+      lake.name + ' RGB ' + year + ' (seasonal)'
+    );
+
+    // ---- Convert 4-band composite to 8-bit ----
+    var s2_8bit = to8bit(s2Comp.select(['B2','B3','B4','B8']));
+
+    // ---- Get GSW mask (correct water logic) ----
+    var gswMask = getGSWWaterMask(aoi, year, s2Comp);
+
+    // ---- Optional: refine with NDWI ----
+    var finalWaterMask = refineWithNDWI(gswMask, s2Comp);
+
+    Map.addLayer(
+      finalWaterMask,
+      {min:0, max:1, palette:['black','blue']},
+      lake.name + ' waterMask ' + year
+    );
+
+    // =============================
+    // 6. EXPORTS
+    // =============================
+
+    // 6a. Export 4-band 8-bit Sentinel-2 composite (B2,B3,B4,B8)
+    Export.image.toDrive({
+      image: s2_8bit,
+      description: lake.name + '_' + year + '_s2_4band',
+      folder: driveFolder,
+      fileNamePrefix: lake.name + '_' + year + '_s2_4band',
+      region: aoi,
+      scale: 10,
+      maxPixels: 1e13,
+      fileFormat: 'GeoTIFF'
+    });
+
+    // 6b. Export final refined water mask (binary 0/1)
+    Export.image.toDrive({
+      image: finalWaterMask.toUint8(), // keep as 0/1 uint8
+      description: lake.name + '_' + year + '_gsw_water',
+      folder: driveFolder,
+      fileNamePrefix: lake.name + '_' + year + '_gsw_water',
+      region: aoi,
+      scale: 10,
+      maxPixels: 1e13,
+      fileFormat: 'GeoTIFF'
+    });
+
+  });
+});
