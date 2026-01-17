@@ -1,0 +1,162 @@
+// =====================================================================
+// 0. CONFIGURATION: MARSHES + YEARS + SEASON WINDOW
+// =====================================================================
+
+// Iraqi marshes (Mesopotamian Marshes): Central, Hammar, Hawizeh
+// Centres based on Ramsar coordinates (approx). Tune buffer_m to your needs.
+var lakes = [
+  {
+    name: 'central_marshes',
+    center: ee.Geometry.Point([47.083333, 30.976111]), // 31°10'34"N 46°59'E
+    buffer_m: 80000
+  }
+];
+
+// Years you want to export
+var years = [2017, 2021];
+
+// Seasonal window (recommended for cleaner shorelines)
+var seasonStartMonth = 6;
+var seasonEndMonth   = 9;
+
+var driveFolder = 'Iraq_Marshes';  // Google Drive folder name
+
+// 8-bit scaling for model inputs
+var SR_MIN = 0;
+var SR_MAX = 3000;
+
+// NDWI threshold for optional refinement
+var NDWI_THR = 0.10;
+
+
+// =====================================================================
+// 1. HELPER: BUILD SENTINEL-2 L2A MEDIAN COMPOSITE (B2,B3,B4,B8) + NDWI
+// =====================================================================
+function buildS2Composite_L2A(aoi, year, startMonth, endMonth) {
+
+  var start = ee.Date.fromYMD(year, startMonth, 1);
+  var end   = ee.Date.fromYMD(year, endMonth, 28);
+
+  var s2 = ee.ImageCollection('COPERNICUS/S2_SR_HARMONIZED')
+    .filterBounds(aoi)
+    .filterDate(start, end)
+    .filter(ee.Filter.lt('CLOUDY_PIXEL_PERCENTAGE', 10))
+    .select(['B2','B3','B4','B8']); // 10 m bands
+
+  var withNDWI = s2.map(function(img) {
+    var ndwi = img.normalizedDifference(['B3','B8']).rename('NDWI');
+    return img.addBands(ndwi);
+  });
+
+  return withNDWI.median().clip(aoi);
+}
+
+
+// =====================================================================
+// 2. HELPER: CONVERT SENTINEL-2 SR TO 8-BIT (0-255)
+// =====================================================================
+function to8bit(img4band) {
+  return img4band
+    .clamp(SR_MIN, SR_MAX)
+    .subtract(SR_MIN)
+    .divide(SR_MAX - SR_MIN)
+    .multiply(255)
+    .toUint8();
+}
+
+
+// =====================================================================
+// 3. HELPER: GET CORRECT GSW WATER MASK (SEASONAL + PERMANENT)
+// =====================================================================
+function getGSWWaterMask(aoi, year, refImage) {
+
+  var gswCol = ee.ImageCollection('JRC/GSW1_4/YearlyHistory')
+    .select('waterClass')
+    .filter(ee.Filter.calendarRange(year, year, 'year'));
+
+  var gswFirst = ee.Image(gswCol.first());
+
+  var refProj = refImage.select('B2').projection();
+
+  var emptyMask = ee.Image(0).rename('water')
+    .reproject({crs: refProj, scale: 10})
+    .clip(aoi);
+
+  var waterClass = ee.Image(
+    ee.Algorithms.If(gswFirst, gswFirst.clip(aoi), emptyMask)
+  );
+
+  var waterBinary = waterClass.eq(2).or(waterClass.eq(3))
+    .rename('water')
+    .reproject({crs: refProj, scale: 10});
+
+  return waterBinary;
+}
+
+
+// =====================================================================
+// 4. OPTIONAL: REFINE WATER MASK WITH NDWI (REDUCE FALSE POSITIVES)
+// =====================================================================
+function refineWithNDWI(waterMask, s2comp) {
+  var ndwi = s2comp.select('NDWI');
+  var ndwiMask = ndwi.gt(NDWI_THR);
+  return waterMask.and(ndwiMask).rename('water');
+}
+
+
+// =====================================================================
+// 5. MAIN LOOP: EXPORT 8-BIT S2 + WATER MASK FOR EACH MARSH + YEAR
+// =====================================================================
+lakes.forEach(function(lake) {
+
+  var aoi = lake.center.buffer(lake.buffer_m);
+  Map.addLayer(aoi, {}, lake.name + ' AOI');
+
+  years.forEach(function(year) {
+
+    var s2Comp = buildS2Composite_L2A(aoi, year, seasonStartMonth, seasonEndMonth);
+
+    Map.addLayer(
+      s2Comp,
+      {bands:['B4','B3','B2'], min:0, max:3000},
+      lake.name + ' RGB ' + year + ' (seasonal)'
+    );
+
+    var s2_8bit = to8bit(s2Comp.select(['B2','B3','B4','B8']));
+
+    var gswMask = getGSWWaterMask(aoi, year, s2Comp);
+
+    var finalWaterMask = refineWithNDWI(gswMask, s2Comp);
+
+    Map.addLayer(
+      finalWaterMask,
+      {min:0, max:1, palette:['black','blue']},
+      lake.name + ' waterMask ' + year
+    );
+
+    // 6a. Export 4-band 8-bit Sentinel-2 composite
+    Export.image.toDrive({
+      image: s2_8bit,
+      description: lake.name + '_' + year + '_s2_4band_8bit',
+      folder: driveFolder,
+      fileNamePrefix: lake.name + '_' + year + '_s2_4band_8bit',
+      region: aoi,
+      scale: 10,
+      maxPixels: 1e13,
+      fileFormat: 'GeoTIFF'
+    });
+
+    // 6b. Export final refined water mask
+    Export.image.toDrive({
+      image: finalWaterMask.toUint8(),
+      description: lake.name + '_' + year + '_gsw_water',
+      folder: driveFolder,
+      fileNamePrefix: lake.name + '_' + year + '_gsw_water',
+      region: aoi,
+      scale: 10,
+      maxPixels: 1e13,
+      fileFormat: 'GeoTIFF'
+    });
+
+  });
+});
