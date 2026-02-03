@@ -30,7 +30,7 @@ var years = [2021];
 var seasonStartMonth = 6;
 var seasonEndMonth   = 9;
 
-var driveFolder = 'Iraq_Lake';  // Google Drive folder name
+var driveFolder = 'Iraq_Marshes';  // Google Drive folder name
 
 // 8-bit scaling for model inputs
 // Adjust MAX if your SR values clip too aggressively.
