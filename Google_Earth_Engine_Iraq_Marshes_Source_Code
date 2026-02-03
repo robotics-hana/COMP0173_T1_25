@@ -23,7 +23,7 @@ var marshes = [
 
 
 // Years you want to export
-var years = [2017, 2021];
+var years = [2021];
 
 // Seasonal window (recommended for cleaner shorelines)
 // Example: June (6) to September (9)
