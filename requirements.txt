@@ -4,6 +4,7 @@ keras
 rioxarray
 rasterio
 PIL
+Pillow
 segmentation-models
 rarfile
 pyunpack
@@ -12,3 +13,6 @@ matplotlib
 pandas
 pathlib
 sklearn
+scikit-learn
+requests
+xarray
