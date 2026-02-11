@@ -1,38 +1,148 @@
-# COMP0173
+## 🌍 Attention U-Net for Iraqi Marshland and Lake Segmentation  
+AI for Sustainable Development | MSc Dissertation Project
 
-## Original Repo
+---
 
-**An Attention-Based U-Net for Detecting Deforestation Within Satellite Sensor Imagery.** 
-https://www.sciencedirect.com/science/article/pii/S0303243422000113
+## 1. Overview
 
-## Datasets
-### Amazon 1 (Regular 3-dim Dataset) -- https://zenodo.org/record/3233081
-### Amazon 2 (Larger 4-band Amazon and Atlantic Datasets) -- https://zenodo.org/record/4498086#.YMh3GfKSmCU
+This project implements an Attention U-Net architecture to perform semantic segmentation of marshland and lake surface water bodies across Iraq using 4-band Sentinel-2 imagery (RGB + Near-Infrared).
 
-## Files
-+ **dataset** -- Folder of original dataset from Regular Dataset.
-+ **figures** -- Figures for report (amazon-atlantic-forest-mapjpg.jpg from https://pubmed.ncbi.nlm.nih.gov/20433744/).
-  + **shapefiles** -- Shapefiles for map. Amazon Shapefile from: (http://worldmap.harvard.edu/data/geonode:amapoly_ivb), rest from: (http://terrabrasilis.dpi.inpe.br/en/download-2/).
-+ **models** -- Folder of each of the three types of Attention U-Net model; load into Keras using 'load_model([modelfilename])'.
-+ **metrics** -- Folder of metrics (accuracy, precision, recall, F1-score) for each result.
-+ Experimentation.ipynb -- Jupyter notebook of data processing, augmentation, model training and testing.
-+ Figures.ipynb -- Jupyter notebook of figures found in **figures**.
-+ predictor.py -- Takes any input RGB or 4-band image and outputs Attention U-Net-predicted deforestation mask to file.
-+ preprocess-4band-amazon-data.py -- Python script to preprocess GeoTIFFs from 4-band Amazon Dataset and export as numpy pickles.
-+ preprocess-4band-atlantic-forest-data.py -- Python script to preprocess GeoTIFFs from 4-band Atlantic Forest Dataset and export as numpy pickles.
-+ preprocess-rgb-data.py -- Python script to preprocess data in RGB Dataset and export as numpy pickles.
-+ requirements.txt -- Required Python libraries.
+The objective is to generate high-resolution spatial segmentation maps that quantify environmental change, hydrological stress, and surface water dynamics within critical freshwater ecosystems.
 
-## How to use
-### Obtaining Attention U-Net Deforestation Masks
-+ Run pip -r requirements.txt to install libraries.
-+ Download 'unet-attention-3d.hdf5', 'unet-attention-4d.hdf5' and 'unet-attention-4d-atlantic.hdf5' models, and place in same directory as script.
-+ Run 'python predictor.py [MODEL IDENTIFIER] [INPUT IMAGE PATH]' or 'python3 predictor.py [MODEL IDENTIFIER] [INPUT IMAGE PATH]'.
-  + Model identifier for RGB is 1, 4-band Amazon-trained is 2, 4-band Atlantic Forest-trained is 3.
-  + e.g. Get mask prediction of image named 'test.tif' from 4-band Amazon model: 'python predictor.py 2 test.tif'.
+This research directly contributes to the following United Nations Sustainable Development Goals (SDGs):
 
-### Obtaining Pre-Processed Data
-+ Run pip -r requirements.txt to install libraries.
-+ Run 'preprocess-4band-amazon-data.py' to pre-process 4-band Amazon data.
-+ Run 'preprocess-4band-atlantic-forest-data.py' to pre-process 4-band Atlantic Forest data.
-+ Run 'preprocess-rgb-data.py' to pre-process RGB Amazon data.
+- SDG 6 – Clean Water and Sanitation  
+- SDG 13 – Climate Action  
+- SDG 15 – Life on Land  
+
+Iraq’s marshlands constitute a UNESCO World Heritage Site and represent one of the most ecologically significant wetland systems in the Middle East. These ecosystems are currently under severe pressure from climate change, reduced upstream discharge, and anthropogenic water management practices.
+
+---
+
+## 2. Datasets
+
+Two publicly available datasets were developed and published on Zenodo for this research.
+
+---
+
+## 2.1 Iraq Lake Surface Water Segmentation Dataset
+
+DOI: 10.5281/zenodo.18601352  
+URL: https://zenodo.org/records/18601352  
+License: Creative Commons Attribution 4.0 (CC BY 4.0)
+
+### Description
+
+This dataset consists of Sentinel-2 Level-2A surface reflectance imagery of major Iraqi lakes, curated for binary water segmentation tasks.
+
+### Geographic Coverage
+
+- Lake Razzaza  
+- Lake Habbaniyah  
+- Lake Tharthar  
+- Lake Dukan  
+- Lake Darbandikhan  
+
+### Data Characteristics
+
+- Four spectral bands: B2 (Blue), B3 (Green), B4 (Red), B8 (Near-Infrared)  
+- Level-2A surface reflectance products  
+- Seasonal median composites  
+- Tiled into 512 × 512 pixel patches  
+- Image–mask pairs  
+- Stored as float32 normalised arrays  
+
+### Dataset Splits
+
+- Training set: 857 tiles  
+- Validation set: 340 tiles  
+- Test set: 63 tiles  
+
+---
+
+## 2.2 Southern Iraqi Marshes Surface Water Segmentation Dataset (2021)
+
+DOI: 10.5281/zenodo.18601207  
+URL: https://zenodo.org/records/18601207  
+License: Creative Commons Attribution 4.0 (CC BY 4.0)
+
+### Description
+
+This dataset contains Sentinel-2 Level-2A surface reflectance imagery of the Southern Iraqi Marshes, specifically curated to benchmark convolutional neural network (CNN) segmentation models in complex wetland environments.
+
+### Data Characteristics
+
+- Four spectral bands (RGB + Near-Infrared)  
+- Level-2A surface reflectance imagery  
+- Binary water masks derived from:
+  - JRC Global Surface Water Yearly History dataset  
+  - Normalised Difference Water Index (NDWI) refinement  
+- 512 × 512 pixel tiles  
+- Balanced class distribution  
+- Stored as float32 normalised arrays  
+
+### Dataset Splits
+
+- Training set: 250 tiles  
+- Validation set: 100 tiles  
+- Test set: 20 tiles  
+
+---
+
+## 3. Dataset Structure and Format
+
+Directory structure:
+
+training/  
+  ├── images/   (.npy, shape: 512×512×4)  
+  └── masks/    (.npy, shape: 512×512×1)  
+
+validation/  
+test/  
+
+### Data Format Specifications
+
+- Images are stored as NumPy (.npy) arrays  
+- Input tensors have dimensions 512 × 512 × 4  
+- Masks are binary with:
+  - 0 representing land  
+  - 1 representing water  
+- All imagery is min–max normalised to the range [0,1]  
+
+---
+
+## 4. Citation
+
+If these datasets are used in academic work, please cite:
+
+@dataset{iraq_lakes_2025,  
+  author    = {Hadidi, Hana},  
+  title     = {Iraq Lake Image Dataset for Semantic Segmentation},  
+  year      = {2025},  
+  publisher = {Zenodo},  
+  doi       = {10.5281/zenodo.18601352}  
+}
+
+@dataset{iraq_marshes_2025,  
+  author    = {Hadidi, Hana},  
+  title     = {Sentinel-2 Surface Water Segmentation Dataset for the Southern Iraqi Marshes (2021)},  
+  year      = {2025},  
+  publisher = {Zenodo},  
+  doi       = {10.5281/zenodo.18601207}  
+}
+
+---
+
+## 5. Model Architecture
+
+The segmentation model is based on the Attention U-Net architecture, incorporating attention gating mechanisms to enhance spatial feature discrimination and boundary refinement.
+
+Model configuration:
+
+- Base number of convolutional filters: 32  
+- Batch Normalization layers  
+- SpatialDropout2D regularisation  
+- Loss function: Binary Cross-Entropy  
+- Optimiser: Adam  
+
+The model is trained to perform binary semantic segmentation of water versus land across multispectral Sentinel-2 imagery.
