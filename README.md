@@ -91,23 +91,28 @@ This dataset contains Sentinel-2 Level-2A surface reflectance imagery of the Sou
 
 ## 3. Dataset Structure and Format
 
-Directory structure:
+training/
+├── images/        (.npy files, shape: 512×512×4)
+└── masks/         (.npy files, shape: 512×512×1)
 
-training/  
-  ├── images/   (.npy, shape: 512×512×4)  
-  └── masks/    (.npy, shape: 512×512×1)  
+validation/
+├── images/        (.npy files, shape: 512×512×4)
+└── masks/         (.npy files, shape: 512×512×1)
 
-validation/  
-test/  
+test/
+├── images/        (.npy files, shape: 512×512×4)
+└── masks/         (.npy files, shape: 512×512×1)
+
 
 ### Data Format Specifications
 
-- Images are stored as NumPy (.npy) arrays  
-- Input tensors have dimensions 512 × 512 × 4  
-- Masks are binary with:
-  - 0 representing land  
-  - 1 representing water  
-- All imagery is min–max normalised to the range [0,1]  
+- Image files are stored as NumPy (.npy) arrays.
+- Each image has dimensions 512 × 512 × 4 corresponding to Sentinel-2 bands (B2, B3, B4, B8).
+- Mask files are stored as NumPy (.npy) arrays with dimensions 512 × 512 × 1.
+- Masks are binary encoded:
+  - 0 represents land
+  - 1 represents water
+- All imagery is min–max normalised to the range [0, 1].
 
 ---
 
