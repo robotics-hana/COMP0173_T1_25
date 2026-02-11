@@ -151,3 +151,58 @@ Model configuration:
 - Optimiser: Adam  
 
 The model is trained to perform binary semantic segmentation of water versus land across multispectral Sentinel-2 imagery.
+
+
+# 6. . Experimental Reproducibility
+
+This repository contains two primary experimental pipelines to ensure full reproducibility of both the original baseline model and the adapted dissertation model.
+
+## 6.1 Adapted Iraq Lakes and Marshes Experiments
+
+File: Experimentation Lake Marshes.ipynb
+
+This notebook contains the full experimental pipeline for the adapted model developed in this dissertation.
+
+It uses:
+- The Iraq Lake Surface Water Segmentation Dataset
+- The Southern Iraqi Marshes Surface Water Segmentation Dataset
+- 4-band Sentinel-2 imagery (RGB + NIR)
+- The modified Attention U-Net architecture
+
+To reproduce the adapted experiments:
+1. Place the dataset folders (training, validation, test) in the correct directory structure.
+2. Open Experimentation Lake Marshes.ipynb.
+3. Run all cells sequentially.
+
+The notebook performs:
+- Loading .npy 4-band multispectral images
+- Min-max normalisation
+- Model training (U-Net and Attention U-Net)
+- Evaluation using Accuracy, Precision, Recall, and F1-score
+- Cross-dataset transfer evaluation (marshes → lakes)
+
+This file represents the primary experimental contribution of the MSc dissertation.
+
+## 6.2 Original Baseline Reproduction
+
+Files: 
+- Experimentation_Adpated.ipynb
+- Experimentation-Code_Original.pdf
+
+These files reproduce the original dataset and baseline model setup used as the methodological foundation for this project.
+
+To rerun the original experiment:
+1. Ensure the original dataset is structured as expected in the notebook.
+2. Open Experimentation_Adpated.ipynb.
+3. Run all cells sequentially.
+
+The notebook:
+- Loads the original dataset
+- Preprocesses RGB images and masks
+- Trains the baseline U-Net architecture
+- Outputs segmentation metrics
+
+This provides a controlled baseline for comparison against the adapted Iraq Lakes and Marshes experiments.
+
+
+
