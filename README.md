@@ -91,17 +91,18 @@ This dataset contains Sentinel-2 Level-2A surface reflectance imagery of the Sou
 
 ## 3. Dataset Structure and Format
 
-training/
-├── images/        (.npy files, shape: 512×512×4)
-└── masks/         (.npy files, shape: 512×512×1)
-
-validation/
-├── images/        (.npy files, shape: 512×512×4)
-└── masks/         (.npy files, shape: 512×512×1)
-
-test/
-├── images/        (.npy files, shape: 512×512×4)
-└── masks/         (.npy files, shape: 512×512×1)
+dataset_root/
+├── training/
+│ ├── images/ # .npy files, shape: (512, 512, 4)
+│ └── masks/ # .npy files, shape: (512, 512, 1)
+│
+├── validation/
+│ ├── images/ # .npy files, shape: (512, 512, 4)
+│ └── masks/ # .npy files, shape: (512, 512, 1)
+│
+└── test/
+├── images/ # .npy files, shape: (512, 512, 4)
+└── masks/ # .npy files, shape: (512, 512, 1)
 
 
 ### Data Format Specifications
