@@ -204,7 +204,7 @@ The notebook:
 
 This provides a controlled baseline for comparison against the adapted Iraq Lakes and Marshes experiments.
 
-# Refernces
+# References
 
 FAO (2021) The State of the World’s Forests 2021. Rome: Food and Agriculture Organization of the United Nations.
 
