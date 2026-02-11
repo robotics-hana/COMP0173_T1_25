@@ -204,5 +204,13 @@ The notebook:
 
 This provides a controlled baseline for comparison against the adapted Iraq Lakes and Marshes experiments.
 
+# Refernces
 
+FAO (2021) The State of the World’s Forests 2021. Rome: Food and Agriculture Organization of the United Nations.
 
+John, D. and Zhang, C. (2022) ‘An attention-based U-Net for detecting deforestation within satellite sensor imagery’, International Journal of Applied Earth Observation and Geoinformation, 107, p. 102685. Available at: https://doi.org/10.1016/j.jag.2022.102685
+
+UNEP (2011) Towards a Green Economy: Pathways to Sustainable Development and Poverty Eradication. Nairobi: United Nations Environment Programme.
+
+UNESCO World Heritage Centre (n.d.) The Ahwar of Southern Iraq: Refuge of Biodiversity and the Relict Landscape of the Mesopotamian Cities. Available at: https://whc.unesco.org/en/list/1481/
+ (Accessed: 11 February 2026).
