@@ -159,7 +159,7 @@ This repository contains two primary experimental pipelines to ensure full repro
 
 ## 6.1 Adapted Iraq Lakes and Marshes Experiments
 
-File: Experimentation Lake Marshes.ipynb
+File: - Experimentation_Adpated.ipynb
 
 This notebook contains the full experimental pipeline for the adapted model developed in this dissertation.
 
@@ -186,7 +186,7 @@ This file represents the primary experimental contribution of the MSc dissertati
 ## 6.2 Original Baseline Reproduction
 
 Files: 
-- Experimentation_Adpated.ipynb
+- Experimentation Lake Marshes.ipynb
 - Experimentation-Code_Original.pdf
 
 These files reproduce the original dataset and baseline model setup used as the methodological foundation for this project.
