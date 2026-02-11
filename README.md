@@ -161,7 +161,7 @@ This repository contains two primary experimental pipelines to ensure full repro
 
 File: Experimentation_Adpated.ipynb
 
-This notebook contains the full experimental pipeline for the adapted model developed in this dissertation.
+This notebook contains the full experimental pipeline for the adapted model developed in this project.
 
 It uses:
 - The Iraq Lake Surface Water Segmentation Dataset
@@ -171,7 +171,7 @@ It uses:
 
 To reproduce the adapted experiments:
 1. Place the dataset folders (training, validation, test) in the correct directory structure.
-2. Open Experimentation Lake Marshes.ipynb.
+2. Open  Experimentation_Adpated.ipynb.
 3. Run all cells sequentially.
 
 The notebook performs:
