@@ -197,7 +197,8 @@ To rerun the original experiment:
 3. Run all cells sequentially.
 
 To run the lake and marsh dataset on the original model:
- Ensure the original dataset is structured as expected in the notebook.
+
+1. Ensure the original dataset is structured as expected in the notebook.
 2. Open Experimentation_Lake_Marshes.ipynb.
 3. Run all cells sequentially.
 
